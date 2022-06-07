@@ -1,0 +1,38 @@
+<script setup>
+import {ref, reactive} from 'vue';
+import api from '../assets/js/api';
+
+const emitUser = defineEmits(['user-loaded']);
+const props = defineProps(['user']);
+const data = reactive({
+    user: ref(props.user),
+});
+
+(async function(){
+    try{
+        data.user = await api.getUser();
+    } catch(e){
+        console.error(e);
+        console.log('Usuário não autenticado, ou houve um erro ao conectar na API. Retornando para a página de login.');
+        window.location.href = "/login";
+    }
+    emitUser('user-loaded', data.user);
+})();
+</script>
+<template>
+    <div class="dropdown d-flex">
+        <button class="btn d-flex flex-column justify-content-center px-4" id="loginButton" data-bs-toggle="dropdown">
+            <div>Bem-vindo,</div>
+            <div class="fw-bold">{{ data.user ? data.user.name : 'visitante' }}</div>
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="loginButton">
+            <li>
+                <form method="post" action="/logout">
+                    <button class="dropdown-item btn-link" type="submit">Sair</button>
+                </form>
+            </li>
+        </ul>
+    </div>
+</template>
+<style>
+</style>
