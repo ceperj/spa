@@ -1,4 +1,17 @@
 <script setup>
+/*
+ |--------------------------------------------------------------|
+ | FormFormattedInput
+ |--------------------------------------------------------------| 
+ |
+ | Este componente foi feito para servir de base aos componentes
+ | CurrencyCentsInput e PercentageInput, que formatam os valores
+ | utilizando uma máscara, e transformam na hora de editar e
+ | ao concluir a edição.
+ |
+ | Há um exemplo de funcionamento na tabela de IRPF.
+ |
+ */
     import { computed, reactive, unref } from 'vue';
     import FormInput from './FormInput.vue';
 

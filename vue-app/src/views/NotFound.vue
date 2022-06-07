@@ -1,4 +1,13 @@
 <script setup>
+/*
+ |--------------------------------------------------------------|
+ | NotFound
+ |--------------------------------------------------------------|
+ |
+ | Esta página é exibida quando uma rota inválida foi solicitada
+ | ao Vue Router.
+ |
+*/
 import { useRoute } from 'vue-router';
 
 const $route = useRoute();

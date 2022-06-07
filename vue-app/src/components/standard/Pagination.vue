@@ -1,10 +1,25 @@
 <script setup>
-// Modo de usar:
-//
-//      v-model:page="page"
-//             or
-//      :page="page" @navigate="link => onNavigate(link)"
-//
+/*
+|--------------------------------------------------------------|
+| Pagination
+|--------------------------------------------------------------|
+|
+| Componente que exibe uma linha de números de páginas para a
+| paginação de tabelas que contém muitos itens. Pode ser
+| utilizado em conjunto com `DataTable` ou isoladamente, embora
+| force a utilização do estilo de retorno da paginação Laravel.
+|
+| Há dois modos de usar, alterando diretamente uma variável que
+| pode ser assistida (`watch`):
+|
+|   v-model:page="page"
+|
+| Ou interagindo diretamente com eventos que fornecem informação
+| extra:
+| 
+|   :page="page" @navigate="link => onNavigate(link)"
+|
+*/
 
 defineProps(['page', 'links']);
 const emit = defineEmits(['navigate', 'update:page']);

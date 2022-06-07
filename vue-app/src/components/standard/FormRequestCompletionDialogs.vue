@@ -1,4 +1,23 @@
 <script setup>
+/*
+ |--------------------------------------------------------------|
+ | FormRequestCompletionDialogs
+ |--------------------------------------------------------------|
+ |
+ | Possui um componente Modal do Bootstrap que pode alterar-se
+ | para representar dois tipos de resultado da requisição: um
+ | para requisições terminadas com sucesso, e outro para
+ | requisições terminadas com erro.
+ |
+ | Em caso de sucesso, os campos `title` e `success` devem ser
+ | fornecidos. Em caso de erro, todos os campos são fornecidos.
+ |
+ | Deve ser utilizado com [template ref](1), que irá retornar
+ | o conjunto de métodos expostos: showOnSuccess e showOnError.
+ | 
+ | [1]: https://vuejs.org/guide/essentials/template-refs.html
+ */
+
 import { reactive, ref } from 'vue';
 
 let props = defineProps(['id', 'kind']);

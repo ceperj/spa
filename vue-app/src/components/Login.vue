@@ -1,4 +1,21 @@
 <script setup>
+/*
+ |--------------------------------------------------------------|
+ | Login
+ |--------------------------------------------------------------|
+ |
+ | Este componente possui diversas responsabilidades. Optou-se
+ | por elevar um pouco sua complexidade, abstraindo muito do
+ | processo de autenticação do usuário e controle.
+ |
+ | Como responsabilidade, este componente:
+ |  - Exibe o nome do usuário autenticado;
+ |  - Exibe um menu para o usuário desautenticar-se;
+ |  - Faz uma requisição ao servidor verificando se há um usuário
+ |    autenticado, e que usuário é esse;
+ |  - Redireciona para a tela do login, caso nenhum usuário esteja
+ |    autenticado.
+ */
 import {ref, reactive} from 'vue';
 import api from '../assets/js/api';
 

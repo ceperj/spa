@@ -1,4 +1,26 @@
 <script setup>
+/*
+ |--------------------------------------------------------------|
+ | FormRequest
+ |--------------------------------------------------------------| 
+ |
+ | Componente de formulário, cujo POST conduz a uma requisição
+ | HTTP. Possui diversas configurações:
+ |
+ | id - atribute "id" do formulário HTML.
+ | action - URL onde a requisição será feita.
+ | kind - O tipo de item tratado precedido pelo artigo (ex.: O registro), para visualização
+ | fields - Um objeto JSON com os campos que serão tratados.
+ | titleField - O campo principal de "fields" que será usado para identificar um item.
+ | formTransformation - Um objeto de transformação de valor. Para cada campo que
+ |    tiver um método com o mesmo nome, o método será chamado após submeter e
+ |    antes de enviar ao servidor, para transformação do valor enviado.
+ | Slot "fields" - Este slot deve conter os campos HTML do formulário. Ele
+ |    receberá uma variável "values", o qual é um objeto com as propriedades
+ |    "fields" e "validation", onde "fields" é o valor do campo a editar, e
+ |    "validation" é um conjunto de campos que falharam na validação do servidor.
+ */
+
 import { reactive, ref, unref, watch } from 'vue';
 import api from '../../assets/js/api';
 import utils from '../../assets/js/utils';

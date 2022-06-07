@@ -1,4 +1,29 @@
 <script setup>
+/*
+ |--------------------------------------------------------------|
+ | DataTable
+ |--------------------------------------------------------------| 
+ |
+ | Tabela HTML que faz uma requisição ao servidor para receber
+ | seus registros, e exibe-os na página. Por padrão, possui
+ | controles para editar um registro e sair da página, e também
+ | suporta a paginação do Laravel, caso o servidor assim retorne.
+ |
+ | id - atributo "id" da tabela HTML
+ | title - título exibido acima da tabela
+ | requestAll - função de "requests.js" que irá retornar todos os dados (ou página)
+ | exitRoute - rota de saída da página, pode ser uma URL ou objeto para o Vue Router
+ | fields - uma relação [campo do json] => [título do cabeçalho para exibir]
+ | page - a página para exibir ao iniciar o componente
+ | presentation - objeto que, possuindo um método com o nome do campo, tem tal
+ |     método chamado para transformar o valor da requisição em um valor para
+ |     exibição. Recebe o valor por parâmetro e retorna o texto a exibir.
+ | removeControls - se informado como "true", remove todos os controles de
+ |     seleção "radio" e botões de editar e sair.
+ |
+ | Emite o evento "onEdit" com o objeto que o usuário optou por editar.
+ |
+ */
 import { computed, reactive, ref, watch } from 'vue';
 import Pagination from './Pagination.vue';
 
