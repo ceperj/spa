@@ -43,6 +43,10 @@ class User extends Authenticatable
         'hashid',
     ];
 
+    public function isActive(){
+        return $this->status === Constants::STATUS_ACTIVE;
+    }
+
     public function isStandard(){
         return $this->role === Constants::USER_ROLE_STANDARD
             || $this->role === Constants::USER_ROLE_ADMIN;

@@ -39,14 +39,12 @@ Route::post("/login", [LoginController::class, 'confirmWeb'])->name('loginPost')
 
 Route::post("/logout", [LoginController::class, 'invalidateWeb'])->name('logout');
 
+Route::get('/api/csrf', function(){ return csrf_token(); });
+
 /**
  * API routes (authenticated)
  */
-Route::prefix('api')->group(function(){
-    Route::get('/csrf', function(){
-        return csrf_token();
-    });
-
+Route::middleware(['authorizeActiveUser'])->prefix('api')->group(function(){
     // Dados de referência
     Route::get('/whoami', fn (Request $request) => new UserResource($request->user()));
     
