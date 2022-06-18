@@ -47,6 +47,7 @@ A partir deste momento, algumas configurações adicionais são necessárias. Ab
     CACHE_DRIVER=file
     FILESYSTEM_DISK=local
     ...
+    QUEUE_CONNECTION=database
     SESSION_DRIVER=file
     SESSION_LIFETIME=360
 
