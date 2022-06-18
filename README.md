@@ -10,6 +10,49 @@ Para instalar a aplicação, há alguns passos que devem ser seguidos. Siga a or
 
 Para a instalação do Laravel, além dos requerimentos padrões do framework, também são necessárias as ferramentas [Composer](https://getcomposer.org/) e [NPM](https://www.npmjs.com/). Garanta que estejam atualizadas antes de prosseguir.
 
+## Máquina Redhat 8
+
+### Instalação PHP 8.0 e driver Mysql
+    dnf update
+    dnf module install php:8.0
+    dnf install php-mysqlnd
+
+
+Caso seja necessário PHP a partir de **8.1**, necessário instalar repositório REMI (pule os passos anteriores)
+
+    dnf -y install https://rpms.remirepo.net/enterprise/remi-release-8.rpm
+    dnf -y install dnf-utils
+    dnf --enablerepo=remi module install php:8.2
+    dnf install php82-php-mysqlnd
+    ln -s /usr/bin/php82 /usr/bin/php
+
+### Instalação Composer
+Composer pode ser instalado localmente, ou universal na máquina, que será preferível.
+
+    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+    php -r "if (hash_file('sha384', 'composer-setup.php') === '55ce33d7678c5a611085589f1f3ddf8b3c52d662cd01d4ba75c0ee0459970c2200a51f492d557530c71c15d8dba01eae') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+    php composer-setup.php
+    php -r "unlink('composer-setup.php');"
+    mv composer.phar /usr/local/bin/composer
+
+### Passos finais
+
+Instalação de NPM, HTTPD (Apache), Git e Zip
+
+    dnf install npm git httpd unzip
+
+Atualizar versão de NodeJS (por padrão vem a 10 que é incompatível)
+
+    dnf module switch-to nodejs:16
+
+Clone o repositório e insira as credenciais necessárias
+
+    git clone https://github.com/ceperj/spa/
+
+Configure o httpd para o diretório spa/public, permitindo roteamento dos .htaccess (`AllowOverride All`).
+
+Caso haja problemas de permissão(403), mesmo com diretório sob usuário apache, verificar permissões SELINUX (/etc/selinux/config), configurar `SELINUX=permissive` e reiniciar servidor. Também verificar firewall (`systemctl disable firewalld`)
+
 ### Passo 1. Instalação dos Arquivos
 
 Para baixar os arquivos do Laravel e todas as suas dependências, entre no diretório da aplicação Laravel e execute os seguintes comandos:
