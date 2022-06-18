@@ -23,4 +23,7 @@ export default {
 
     async getUser(id){ return api.getJSON(`/api/user/${id}`) },
     async getUsers(){ return api.getJSON(`/api/users`) },
+
+    async getGfipInfo() { return api.getJSON('/api/gfip') },
+    async generateGfip() { return api.postForm('/api/gfip/start') },
 }

@@ -13,12 +13,15 @@ export default {
     async getJSON(url){
         /* DEV */ if (import.meta.env.DEV) return {data:Array(19).fill(0).map((v,k)=>[k+1,'Item '+(k+1)])};
 
-        return netutils.prepareGet(async () => {
+        return await netutils.prepareGet(async () => {
             try{
-                let response = await axios.get(url);
-                return response.data;
+                let result = await axios.get(url);
+                if (result.status !== 200)
+                    throw result;
+
+                return result.data;
             }catch(e){
-                return this.asDisplayableError(e);
+                throw this.asDisplayableError(e);
             }
         });
     },
@@ -26,15 +29,20 @@ export default {
     async sendForm(method, url, formSelector, formTransformation){
         await netutils.requestCsrf();
 
-        const form = document.querySelector(formSelector);
-        if ((form instanceof HTMLFormElement) === false)
-            return console.error("O objeto informado não era um Form") || null;
+        let body = '';
 
-        let formData = new FormData(form);
-        this.removeEmptyFields(formData);
-        if (formTransformation)
-            formData = formTransformation(formData) || formData;
-        const body = new URLSearchParams(formData);
+        if (formSelector)
+        {
+            const form = document.querySelector(formSelector);
+            if ((form instanceof HTMLFormElement) === false)
+                return console.error("O objeto informado não era um Form") || null;
+
+            let formData = new FormData(form);
+            this.removeEmptyFields(formData);
+            if (formTransformation)
+                formData = formTransformation(formData) || formData;
+            body = new URLSearchParams(formData);
+        }
 
         try{
             const response = await netutils.request(method, url, body);

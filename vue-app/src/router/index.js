@@ -28,6 +28,11 @@ const router = createRouter({
       component: AddPerson,
     },
     {
+      path: '/relatorios/gfip',
+      name: 'generateGfip',
+      component: () => import('../views/Reports/Gfip.vue'),
+    },
+    {
       path: '/relatorios',
       name: 'reports',
       // component: () => import('../views/Reports.vue'),

@@ -3,6 +3,7 @@ import { reactive } from "vue";
 import { RouterView } from "vue-router";
 import ApplicationHeader from "./components/ApplicationHeader.vue";
 import MainLoader from "./components/MainLoader.vue";
+import DelayedDiv from "./components/standard/DelayedDiv.vue";
 import Login from "./components/Login.vue";
 import router from "./router";
 
@@ -34,6 +35,10 @@ function setLoadedUser(loadedUser)
 function receiveLoaderEvent(active){
   data.pageLoader = active;
 }
+
+function reloadPage(){
+  window.location.reload();
+}
 </script>
 <template>
   <main>
@@ -53,7 +58,11 @@ function receiveLoaderEvent(active){
         <span class="visually-hidden">Carregando&hellip;</span>
         </div>
         <h3 class="fw-light mt-3">Aguarde&hellip;</h3>
-        </div>
+        <DelayedDiv>
+          <p>Isso está levando mais tempo do que deveria.</p>
+          <p><a href="#" @click.prevent="reloadPage()">Recarregar a página?</a></p>
+        </DelayedDiv>
+      </div>
     </div>
     <footer class="pt-3">
     </footer>
