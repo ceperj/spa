@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BatteryController;
+use App\Http\Controllers\GenerateGfipController;
 use App\Http\Controllers\InssController;
 use App\Http\Controllers\IrpfController;
 use App\Http\Controllers\JobController;
@@ -83,10 +84,16 @@ Route::middleware(['authorizeActiveUser'])->prefix('api')->group(function(){
     Route::post('/person/{person}', [PersonController::class, 'update']);
     Route::delete('/person/{person}', [PersonController::class, 'deactivate']);
 
+    // IRPF
     Route::get('/irpf', [IrpfController::class, 'index']);
     Route::get('/irpf/{irpf}', [IrpfController::class, 'show']);
     Route::post('/irpf', [IrpfController::class, 'store']);
     Route::post('/irpf/{irpf}', [IrpfController::class, 'update']);
+
+    // GFIP
+    Route::get('/gfip', [GenerateGfipController::class, 'index']);
+    Route::get('/gfip/download', [GenerateGfipController::class, 'download']);
+    Route::post('/gfip/start', [GenerateGfipController::class, 'start']);
 
     /**
      * API routes exclusive for admins
