@@ -53,7 +53,7 @@ Configure o httpd para o diretório spa/public, permitindo roteamento dos .htacc
 
 Caso haja problemas de permissão(403), mesmo com diretório sob usuário apache, verificar permissões SELINUX (/etc/selinux/config), configurar `SELINUX=permissive` e reiniciar servidor. Também verificar firewall (`systemctl disable firewalld`)
 
-### Passo 1. Instalação dos Arquivos
+### Instalação dos arquivos do Laravel
 
 Para baixar os arquivos do Laravel e todas as suas dependências, entre no diretório da aplicação Laravel e execute os seguintes comandos:
 
@@ -64,7 +64,7 @@ Com o Laravel instalado, coloque a aplicação em modo de manutenção:
 
     php artisan down
 
-### Passo 2. Configurações iniciais
+### Configurações iniciais do Laravel
 
 Para adicionar as configurações iniciais iremos copiar um arquivo `.env` de exemplo e, em seguida, gerar uma chave aleatória para o campo APP_KEY:
 
@@ -96,7 +96,7 @@ A partir deste momento, algumas configurações adicionais são necessárias. Ab
 
 Estes não são todos os campos do arquivo, mas são os utilizados. Outras configurações, como Redis e SMTP são possíveis, mas desnecessárias, pois a aplicação não utilizará tais serviços.
 
-### Passo 3. Geração do Banco de Dados
+### Geração do Banco de Dados
 
 Neste passo, a conexão com o Banco de Dados é requerida. As configurações acima devem ser suficientes para também configurar tal conexão, mas quaisquer problemas de conectividade devem ser tratados.
 
@@ -108,7 +108,7 @@ Para criar as tabelas no banco, execute:
 
 Se o comando for bem-sucedido, o banco de dados estará pronto para o próximo passo. Caso contrário, verifique a conectividade e configurações da aplicação no arquivo `.env`.
 
-### Passo 4. Criação de um usuário administrador
+### Criação de um usuário administrador
 
 Para criar o primeiro usuário administrador do sistema, utilize o comando:
 
@@ -118,7 +118,7 @@ Siga as instruções e preencha os dados corretamente. Após o término do coman
 
 Se for necessário cancelar o comando em qualquer momento antes de finalizar, utilize a combinação `Ctrl+C` para forçar sua parada. O usuário é criado apenas ao final do formulário.
 
-### Passso 5. Publicar aplicação front-end
+### Publicar aplicação front-end
 
 Até este ponto, já temos uma aplicação Laravel back-end funcional (em modo de manutenção), inclusive a tela de login, mas ainda não temos a interface do sistema para acessar.
 
@@ -129,7 +129,7 @@ Entre na pasta do Vue, com `cd vue-app` e execute os seguintes comandos:
 
 Este comando é uma modificação de `npm run build` e irá remover qualquer arquivo previamente gerado (somente do Vue) e gerar novamente toda a aplicação.
 
-### Instalação Concluída
+### Instalação concluída
 
 Agora que você já instalou e configurou o Laravel, criou o banco de dados e um usuário, e publicou a aplicação front-end, tire a aplicação do modo de manutenção:
 
@@ -138,6 +138,47 @@ Agora que você já instalou e configurou o Laravel, criou o banco de dados e um
 Se tudo deu certo, você já pode acessar e utilizar a aplicação. Comece fazendo *login* com o super-usuário e cadastrando os demais utilizadores.
 
 ---
+
+## Atualização
+
+Quando o código-fonte é alterado, o PHP estará sempre pronto para servir o novo
+código. Outras partes do sistema, porém, podem requer passos adicionais para
+atualização.
+
+Por isso, antes de atualizar recomenda-se colocar o sistema em modo de manutenção:
+
+    php artisan down
+
+Mudanças no arquivo `.env` devem ser aplicadas manualmente. As demais mudanças
+podem ser enviadas para o servidor através do Git.
+
+Após atualizar o código no servidor, os seguintes passos devem ser executados
+a partir da pasta do Laravel:
+
+    php artisan migrate
+    cd vue-app
+    npm run buildClear
+    cd ..
+
+A execução das _migrations_ irá atualizar o banco de dados.
+**É recomendado que exista um backup do banco de dados antes de executar este passo.**
+_Migrations_ irão, normalmente, criar novas tabelas ou adicionar campos às tabelas.
+Contudo, como a alteração ocorre na estrutura do banco de dados, é recomendado estar
+preparado para imprevistos. Além disso, quaisquer exceções ao executar uma _migration_
+devem ser tratados antes de uma nova tentativa de executá-las.
+
+Como o Laravel mantém uma tabela de registro, _migrations_ já aplicadas não serão
+executadas novamente. Apenas migrations ainda não aplicadas serão executadas.
+
+Já a construção do front-end através do comando `buildClear` é similar ao passo
+da instalação, onde os arquivos gerados previamente em `./public/app` serão
+excluídos e novos arquivos serão gerados. Esta exclusão é desejável, pois todos
+os arquivos de tal pasta foram gerados automaticamente, e sua exclusão evita que
+reste "lixo" ao gerar novos _hashes_ para os arquivos.
+
+Para finalizar, estando na pasta do Laravel, reativa-se a aplicação:
+
+    php artisan up
 
 ## Laravel
 
