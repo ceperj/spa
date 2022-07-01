@@ -7,6 +7,8 @@ import FormInput from "../components/standard/FormInput.vue";
 import FormRequest from "../components/standard/FormRequest.vue";
 import FormRadioGroup from "../components/standard/FormRadioGroup.vue";
 import consts from "../assets/js/consts";
+import NumericInput from "../components/standard/NumericInput.vue";
+import date from "../assets/js/date";
 
 const props = defineProps({
   /**
@@ -27,6 +29,9 @@ const props = defineProps({
   bank_agency: { default: '' },
   bank_account: { default: '' },
   battery_id: { default: 0 },
+  salary: { default: 0 },
+  admission_date: { default: date.asISO8601() },
+  registration_number: { default: '' },
   email: { default: '' },
   job_id: { default: 0 },
   status: { default: 1 },
@@ -91,7 +96,10 @@ function onSubmitDone(success){
               label="Órgão Expedidor"></FormInput>
           </div>
           <div class="row">
-            <FormInput id="pis" v-model="values.fields.pis" :invalid-feedback="values.validation.pis" label="PIS">
+            <FormInput id="pis" v-model="values.fields.pis" col="6"
+              :invalid-feedback="values.validation.pis" label="PIS"></FormInput>
+            <FormInput id="registration_number" v-model="values.fields.registration_number" col="6"
+              :invalid-feedback="values.validation.registration_number" label="Matrícula do Empregado">
             </FormInput>
           </div>
           <div class="row">
@@ -139,6 +147,16 @@ function onSubmitDone(success){
               <label>Cargo ou Função</label>
               <FormDropdown id="job_id" v-model="values.fields.job_id" :invalid-feedback="values.validation.job_id" :options="dropdown.jobs"></FormDropdown>
             </div>
+          </div>
+          <div class="row">
+            <FormInput id="admission_date" v-model="values.fields.admission_date" col="12"
+              :invalid-feedback="values.validation.admission_date" label="Data de Admissão"
+              type="date"></FormInput>
+          </div>
+          <div class="row">
+            <NumericInput id="salary" decimals="2" col="12" v-model="values.fields.salary"
+            :invalid-feedback="values.validation.salary" label="Salário Bruto (R$)"
+            :strip-trailing-zeros="false"></NumericInput>
           </div>
           <div class="row" v-if="editing">
             <FormRadioGroup label="Situação" id="status" v-model="values.fields.status" :invalid-feedback="values.validation.status" :items="dropdown.status"></FormRadioGroup>

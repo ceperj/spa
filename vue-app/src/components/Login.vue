@@ -28,9 +28,11 @@ const data = reactive({
 (async function(){
     try{
         data.user = await api.getUser();
+        console.log('Conectado como',data.user);
     } catch(e){
         console.error(e);
         console.log('Usuário não autenticado, ou houve um erro ao conectar na API. Retornando para a página de login.');
+        console.log('Possível causa do erro:', e.display);
         window.location.href = "/login";
     }
     emitUser('user-loaded', data.user);

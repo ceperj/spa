@@ -34,6 +34,7 @@ const props = defineProps([
     'fields',
     'titleField',
     'formTransformation',
+    'submitTransformation',
 ]);
 
 const values = reactive({

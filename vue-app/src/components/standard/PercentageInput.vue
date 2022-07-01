@@ -1,7 +1,7 @@
 <script setup>
     import { unref } from 'vue';
     import consts from '../../assets/js/consts';
-    import FormFormattedInput from './FormFormattedInput.vue';
+    import FormattedInput from './FormattedInput.vue';
 
     const props = defineProps({
         'id': String,
@@ -44,7 +44,7 @@
     }
 </script>
 <template>
-<FormFormattedInput
+<FormattedInput
     :id="id"
     :label="label"
     :col="col"
@@ -61,5 +61,5 @@
     <template v-slot:after>
         <span class="input-group-text">%</span>
     </template>
-</FormFormattedInput>
+</FormattedInput>
 </template>

@@ -68,29 +68,7 @@ export default {
     },
 
     /**
-     * Torna uma data no formato PHP 'Y-m-d H:i:s', retornada propositalmente
-     * assim para padronização do sistema, em algo mais visualmente familiar
-     * para exibir na tela.
-     * 
-     * @param {string} YmdHis A data no formato 'Y-m-d H:i:s', onde 's' é opcional.
-     * @return O texto com a data mais legível. Caso não esteja no formato esperado,
-     *         o próprio parâmetro YmdHis é retornado.
-     */
-    brazilianizeDateYmdHis(YmdHis)
-    {
-        const match = (''+YmdHis).trim().match(/^(\d+)-(\d+)-(\d+)\s*(\d+):(\d+)(?::(\d+))$/);
-        if (! match) return YmdHis;
-        const Y = match[1]|0;
-        const m = match[2]|0;
-        const d = match[3]|0;
-        const H = match[4]|0;
-        const i = match[5]|0;
-        const pad = (s,l) => (''+s).padStart(l, '0');
-        return `${pad(d,2)}/${pad(m,2)}/${pad(Y,4)} às ${pad(H,2)}:${pad(i,2)}h`;
-    },
-
-    /**
-     * Returns a Promise for an async sleep time.
+     * Retorna uma `Promise` para um tempo de espera em funções async.
      */
     sleep(milliseconds)
     {

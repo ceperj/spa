@@ -10,6 +10,7 @@ defineProps({
   'min': String,
   'max': String,
   'inputClasses': {type: Object, default: {}},
+  'name': {default: null},
 });
 defineEmits(['update:modelValue', 'focus', 'blur']);
 </script>
@@ -28,7 +29,7 @@ defineEmits(['update:modelValue', 'focus', 'blur']);
         :value="modelValue"
         :id="id"
         :class="{'form-control':true, 'is-invalid': invalidFeedback, ...inputClasses}"
-        :name="id"
+        :name="name ?? id"
         :step="step"
         :min="min"
         :max="max">

@@ -1,6 +1,6 @@
 <script setup>
     import consts from '../../assets/js/consts';
-    import FormFormattedInput from './FormFormattedInput.vue';
+    import FormattedInput from './FormattedInput.vue';
 
     defineProps({
         'id': String,
@@ -24,7 +24,7 @@
     }
 
     function editableToReady(value){
-        const num = Number((''+value).replace(',', '.'));
+        const num = Number((''+value).replace(',', '.').replace('-',''));
         const ready = Number(num) * 100;
         return Number.isNaN(ready) ? ready : (ready  + imprecision | 0);
     }
@@ -42,7 +42,7 @@
     }
 </script>
 <template>
-<FormFormattedInput
+<FormattedInput
     :id="id"
     :label="label"
     :col="col"
@@ -59,5 +59,5 @@
     <template v-slot:before>
         <span class="input-group-text">R$</span>
     </template>
-</FormFormattedInput>
+</FormattedInput>
 </template>

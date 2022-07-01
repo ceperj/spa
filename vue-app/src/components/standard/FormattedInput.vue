@@ -1,8 +1,8 @@
 <script setup>
 /*
  |--------------------------------------------------------------|
- | FormFormattedInput
- |--------------------------------------------------------------| 
+ | FormattedInput
+ |--------------------------------------------------------------|
  |
  | Este componente foi feito para servir de base aos componentes
  | CurrencyCentsInput e PercentageInput, que formatam os valores
@@ -11,33 +11,57 @@
  |
  | Há um exemplo de funcionamento na tabela de IRPF.
  |
+ | Este componente introduz algumas palavras-chave. Entendê-las
+ | ajudará a compreender o código dos componentes que o usam:
+ |
+ | display ..... É o valor exibido na tela para o usuário quando
+ |               não há edição em andamento. Pode diferir do
+ |               valor gravado na variável do v-model. Somente
+ |               valores válidos são transformados para exibir
+ |               na tela, valores inválidos são exibidos como são.
+ |
+ | editable .... Valor que aparece quando o usuário está editando
+ |               o campo. Pode diferir de "display" e "ready".
+ | 
+ | ready ....... Valor gravado na variável v-model, atualizado
+ |               antes da edição (com o valor emitido pelo
+ |               servidor), ou após a última edição ter sido
+ |               finalizada.
+ |
+ | valid ....... Aplicado sobre "ready" para garantir que o valor
+ |               gravado na variável atenda ao formato esperado.
+ |
  */
-    import { computed, reactive, unref } from 'vue';
+    import { computed, reactive } from 'vue';
+    import utils from '../../assets/js/utils';
     import FormInput from './FormInput.vue';
 
     const props = defineProps({
-        'id': String,
-        'label': String,
-        'type': { default:'text' },
-        'col': { default: '12' },
-        'modelValue': {},
-        'invalidFeedback': { default: null }, // Server validation
-        'classes': {type: Object, default: {}},
         'errorMessage': {type:String, default:'O valor não é válido.'}, // Client validation
         'isValid': {type: Function, default: ()=>true}, // Client validation
         'readyToEditable': {type:Function, default:v=>v},
         'editableToReady': {type:Function, default:v=>v},
         'readyToDisplay': {type:Function, default:v=>v},
+        
+        // inherit from FormInput
+        'id': String,
+        'name': {default:null},
+        'label': String,
+        'type': { default:'text' },
+        'col': { default: '12' },
+        'classes': {type: Object, default: {}},
+        'invalidFeedback': { default: null }, // Server validation
+        'modelValue': {},
     });
-    const isValid = unref(props.isValid);
-    const readyToEditable = unref(props.readyToEditable);
-    const editableToReady = unref(props.editableToReady);
-    const readyToDisplay = unref(props.readyToDisplay);
+    const isValid = props.isValid;
+    const readyToEditable = props.readyToEditable;
+    const editableToReady = props.editableToReady;
+    const readyToDisplay = props.readyToDisplay;
     const emit = defineEmits(['update:modelValue']);    
     const data = reactive({
         editing: false,
         error: null,
-        input: unref(props.modelValue),
+        input: props.modelValue,
     });
 
     const displayModelValue = computed(() => {
@@ -49,7 +73,7 @@
     });
 
     function onFocus(){
-        let modelValue = unref(props.modelValue);
+        let modelValue = props.modelValue;
         data.input = isValid(modelValue)
             ? readyToEditable(modelValue)
             : data.input;
@@ -60,13 +84,14 @@
         data.editing = false;
     }
 
-    function updateModelValue(value){
+    async function updateModelValue(value){
         if (! data.editing)
             return;
         const ready = editableToReady(value);
         data.input = value;
+        emit('update:modelValue', ready);
+        await utils.sleep(0);
         data.error = isValid(ready) ? null : props.errorMessage;
-        emit('update:modelValue', isValid(ready) ? ready : value);
     }
 </script>
 <template>
@@ -74,6 +99,7 @@
     :type="type"
     :class="{'input-group':true, ...classes}"
     :id="id"
+    :name="name"
     :col="col"
     :label="label"
     :input-classes="{ 'text-end': true }"

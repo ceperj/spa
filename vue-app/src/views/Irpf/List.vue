@@ -7,8 +7,8 @@ import DataTable from '../../components/standard/DataTable.vue';
 const $router = useRouter();
 
 const presentation = {
-    min_cents(value) { return (value / 100).toLocaleString(consts.lang, {style:'currency', currency:consts.intl.currency}); },
-    max_cents(value) { return (value / 100).toLocaleString(consts.lang, {style:'currency', currency:consts.intl.currency}); },
+    min_cents(value) { return ! value ? '' : (value / 100).toLocaleString(consts.lang, {style:'currency', currency:consts.intl.currency}); },
+    max_cents(value) { return ! value ? '' : (value / 100).toLocaleString(consts.lang, {style:'currency', currency:consts.intl.currency}); },
     aliquot(value) { return (value / 10000).toLocaleString(consts.lang, {style:'percent', maximumFractionDigits:2}); },
 }
 

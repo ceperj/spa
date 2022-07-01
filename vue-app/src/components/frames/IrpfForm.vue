@@ -4,6 +4,7 @@ import FormRequest from '../../components/standard/FormRequest.vue';
 import FormInput from '../standard/FormInput.vue';
 import CurrencyCentsInput from '../standard/CurrencyCentsInput.vue';
 import PercentageInput from '../standard/PercentageInput.vue';
+import NumericInput from '../standard/NumericInput.vue';
 
 const emit = defineEmits(['onSubmitDone']);
 const props = defineProps(['rows', 'route', 'exitRoute']);
@@ -27,31 +28,27 @@ function removeItem(index) {
   data.fields.splice(index, 1);
 }
 
-function transformBeforeSend(formData) {
-  let iterableForm = [...formData];
-  for (let [field, value] of iterableForm) {
-    if (!isIntegerField(field)) continue;
-
-    let number = Number(value.replace(',', '.'));
-
-    if (Number.isNaN(number)) throw new Error('O campo ' + field + ' não estava pronto para envio, há um erro no valor: ' + value);
-
-    formData.set(field, ((number * 100 + 0.0001) | 0) + '');
-  }
+function getArrayId(index, field){
+  return 'irpf[' + index + '][' + field + ']';
 }
 
-function isIntegerField(field) {
-  return field.endsWith('[min_cents]')
-    || field.endsWith('[max_cents]')
-    || field.endsWith('[aliquot]');
+function getValidationId(index, field){
+  return 'irpf.' + index + '.' + field;
+}
+
+function currency(text){
+  return 'R$ ' + text;
+}
+
+function percentage(text){
+  return text + ' %';
 }
 </script>
 <template>
   <FormRequest id="pageForm" :action="route" :fields="data.fields"
-    kind="O registro" @on-submit-done="onSubmitDone"
-    :form-transformation="transformBeforeSend">
+    kind="O registro" @on-submit-done="onSubmitDone">
     <template v-slot:fields="values">
-      <table class=table>
+      <table class="table">
         <thead>
           <th style="width:200px">Limite Mínimo (R$)</th>
           <th style="width:200px">Limite Máximo (R$)</th>
@@ -61,22 +58,29 @@ function isIntegerField(field) {
         <tbody>
           <tr v-for="(item, index) in values.fields">
             <td>
-              <CurrencyCentsInput :id="'irpf[' + index + '][min_cents]'"
-                v-model="item.min_cents"
-                :invalid-feedback="values.validation['irpf.' + index + '.min_cents']"
-                :classes="{ 'input-group-sm': true }"></CurrencyCentsInput>
+              <NumericInput
+                :id="getArrayId(index, 'min_cents')" :displayed-as="currency"
+                v-model="item.min_cents" :decimals="2"
+                :invalid-feedback="values.validation[getValidationId(index, 'min_cents')]"
+                :classes="{ 'input-group-sm': true }"></NumericInput>
             </td>
             <td>
-              <CurrencyCentsInput :id="'irpf[' + index + '][max_cents]'"
-                v-model="item.max_cents"
-                :invalid-feedback="values.validation['irpf.' + index + '.max_cents']"
-                :classes="{ 'input-group-sm': true }"></CurrencyCentsInput>
+              <NumericInput  v-if="index < values.fields.length - 1"
+                :id="getArrayId(index, 'max_cents')" :displayed-as="currency"
+                v-model="item.max_cents" :decimals="2"
+                :invalid-feedback="values.validation[getValidationId(index, 'max_cents')]"
+                :classes="{ 'input-group-sm': true }"></NumericInput>
+              <div v-else class="input-group input-group-sm">
+                <input class="form-control text-end" value="" disabled readonly>
+                <input type="hidden" value="0" :name="getArrayId(index, 'max_cents')">
+              </div>
             </td>
             <td>
-              <PercentageInput :id="'irpf[' + index + '][aliquot]'"
-                v-model="item.aliquot"
-                :invalid-feedback="values.validation['irpf.' + index + '.aliquot']"
-                :classes="{ 'input-group-sm': true }"></PercentageInput>
+              <NumericInput
+                :id="getArrayId(index, 'aliquot')" :displayed-as="percentage"
+                :invalid-feedback="values.validation[getValidationId(index, 'aliquot')]"
+                v-model="item.aliquot" :strip-trailing-zeros="true" :decimals="2"
+                :classes="{ 'input-group-sm': true }"></NumericInput>
             </td>
             <td>
               <button type="button" class="btn btn-sm btn-link"
@@ -84,7 +88,7 @@ function isIntegerField(field) {
             </td>
           </tr>
           <tr>
-            <td colspan="4 gx-3">
+            <td colspan="4" class="gx-3">
               <button type="button" class="d-block btn btn-link"
                 :class="{ 'is-invalid': values.validation.irpf }"
                 @click="addItem">Adicionar nova linha</button>

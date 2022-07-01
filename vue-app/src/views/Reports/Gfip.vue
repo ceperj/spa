@@ -6,56 +6,59 @@ import { onMounted, onUnmounted, reactive, ref, toRaw } from 'vue';
 import ModalVue from '../../components/standard/Modal.vue';
 import requests from '../../assets/js/requests';
 import utils from '../../assets/js/utils';
+import { computed } from '@vue/reactivity';
+import date from '../../assets/js/date';
 
 const data = reactive({
   loaded: false,
-  started: false,
-  completed: false,
+  state: 'NOTSTARTED',
   success: false,
-  error: '',
+  message: '',
   current: 0,
   total: 0,
+  progress: null,
   startedAt: '',
-  completedAt: '',
+  startedAtRead: '',
   updatedAt: '',
+  updatedAtRead: '',
+  completedAt: '',
+  completedAtRead: '',
   expiresAt: false,
   running: false,
-  progress: null,
 });
 const emit = defineEmits(['updateLoader']);
 const modalOverride = ref(null);
+const error = computed(() => data.success ? null : data.message);
+
 let refreshTimeout;
 
 async function refresh(){
   try{
     const response = await requests.getGfipInfo();
     data.loaded = true;
-    data.started = response.started;
-    data.completed = response.completed;
+    data.state = response.state;
     data.success = response.success;
-    data.running = response.running;
-    data.startedAt = utils.brazilianizeDateYmdHis(response.startedAt);
+    data.message = response.message;
+    data.startedAt = date.brazilianize(response.startedAt);
     data.startedAtRead = response.startedAtRead;
-    data.completedAt = utils.brazilianizeDateYmdHis(response.completedAt);
+    data.completedAt = date.brazilianize(response.completedAt);
     data.completedAtRead = response.completedAtRead;
-    data.updatedAt = utils.brazilianizeDateYmdHis(response.updatedAt);
+    data.updatedAt = date.brazilianize(response.updatedAt);
     data.updatedAtRead = response.updatedAtRead;
     data.expiresAt = response.expiresAt;
     data.current = response.current;
     data.total = response.total;
     data.progress = response.progress;
-    console.log('GFIP do servidor', response);
-    console.log('GFIP do vue', toRaw(data));
+    data.running = ['RUNNING', 'QUEUED', 'STARTED'].indexOf(data.state) >= 0;
   } catch (e){
     data.loaded = false;
-    data.error = e.display;
+    data.success = false;
+    data.message = e.display;
   }
 
+  clearTimeout(refreshTimeout);
   if (data.running)
-  {
-    clearTimeout(refreshTimeout);
     refreshTimeout = setTimeout(refresh, 1000);
-  }
 }
 
 async function generate(){
@@ -71,7 +74,7 @@ async function generateConfirm(){
 
   while(! data.running)
   {
-    await utils.sleep(250);
+    await utils.sleep(1000);
     await refresh();
   }
 
@@ -95,10 +98,10 @@ onUnmounted(() => clearTimeout(refreshTimeout));
     <p class="fw-bold pt-4 text-start">Gerar arquivo GFIP</p>
 
     <!-- Erro ao fazer o carregamento inicial -->
-    <div v-if="!data.loaded && data.error">
+    <div v-if="!data.loaded && error">
       <div class="alert alert-danger">
         <p>Não foi possível carregar os dados sobre geração de arquivo GFIP devido a um erro na conexão ou servidor:</p>
-        <p><strong>{{data.error}}</strong></p>
+        <p><strong>{{error}}</strong></p>
       </div>
     </div>
 
@@ -113,7 +116,7 @@ onUnmounted(() => clearTimeout(refreshTimeout));
     </div>
  
     <!-- Tela de conclusão: sucesso -->
-    <div v-else-if="data.completed && data.success" class="d-inline-block">
+    <div v-else-if="(data.state === 'COMPLETED') && data.success" class="d-inline-block">
       <span>A geração foi concluída com sucesso!</span>
       <div class="ms-2 my-3">
         <div>Iniciada: <strong>em {{ data.startedAt }}.</strong></div>
@@ -140,7 +143,7 @@ onUnmounted(() => clearTimeout(refreshTimeout));
 
     <!-- Tela de progresso -->
     <div v-else-if="data.running" class="d-inline-block">
-      <span>Já existe uma geração em andamento.</span>
+      <span>A geração está em andamento.</span>
       <div class="ms-2 my-3">
         <div>Iniciada: <strong>em {{ data.startedAt }}.</strong></div>
         <div>Atualização mais recente: <strong>{{data.updatedAtRead}}, em {{ data.updatedAt }}.</strong></div>
@@ -158,9 +161,9 @@ onUnmounted(() => clearTimeout(refreshTimeout));
 
     <!-- Tela inicial + Tela de erro -->
     <div v-else class="d-flex flex-column">
-      <div v-if="data.completed && ! data.success" class="alert alert-danger">
+      <div v-if="data.state === 'COMPLETED' && ! data.success" class="alert alert-danger">
         <p>A última tentativa de geração, iniciada em {{data.startedAt}} e atualizada em {{data.updatedAt}}, foi mal-sucedida:</p>
-        <p><strong>Erro: {{data.error || 'não há informações adicionais sobre o erro.'}}</strong></p>
+        <p><strong>Erro: {{error || 'não há informações adicionais sobre o erro.'}}</strong></p>
       </div>
       <span v-else>No momento, nenhum arquivo está sendo gerado.</span>
       <div class="pt-2 d-flex">
