@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use DateTime;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -33,6 +34,9 @@ class PersonFactory extends Factory
             'user_id' => 1,
             'status' => 1,
             'email' => $this->faker->unique()->safeEmail(),
+            'salary' => $this->faker->numberBetween(121200, 1000000),
+            'admission_date' => $this->faker->dateTimeBetween('-10 year', 'now'),
+            'registration_number' => $this->faker->regexify('[0-9]{11}'),
         ];
     }
 

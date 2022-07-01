@@ -140,6 +140,8 @@ return [
         'sector' => 'Setor',
         'startDate' => 'Data de Início',
         'endDate' => 'Data de Término',
+        'start_date' => 'Data de Início',
+        'end_date' => 'Data de Término',
         'rg' => 'RG',
         'rgexp' => 'Órgão Expedidor',
         'cpf' => 'CPF',
@@ -149,5 +151,7 @@ return [
         'password_confirmed' => 'Repetir Senha',
         'username' => 'Usuário',
         'status' => 'Situação',
+        'admission_date' => 'Data de admissão',
+        'salary' => 'Salário',
     ],
 ];

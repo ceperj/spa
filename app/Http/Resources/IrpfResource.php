@@ -19,10 +19,6 @@ class IrpfResource extends JsonResource
             'min_cents' => $this->min_cents,
             'max_cents' => $this->max_cents,
             'aliquot' => $this->aliquot,
-            'd_min' => sprintf("%.2f", $this->min_cents / 100.0),
-            'd_max' => sprintf("%.2f", $this->max_cents / 100.0),
-            'd_aliquot' => sprintf("%.g%%", $this->aliquot / 100.0),
-            'd_aliquot_f' => sprintf("%.4f", $this->aliquot / 10000.0),
         ];
     }
 }

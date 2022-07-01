@@ -20,7 +20,7 @@ class PersonController extends Controller
      */
     public function index()
     {
-        return ListablePersonResource::collection(Person::paginate(15));
+        return ListablePersonResource::collection(Person::withTrashed()->paginate(15));
     }
 
     /**
@@ -65,5 +65,8 @@ class PersonController extends Controller
         $person->fill($data);
         $person->status = (int)$data['status'];
         $person->save();
+
+        if ((int)$data['status'] === Constants::STATUS_INACTIVE)
+            $person->delete();
     }
 }

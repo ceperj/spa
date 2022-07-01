@@ -29,10 +29,18 @@ class Person extends Model
         'battery_id',
         'email',
         'job_id',
+        'admission_date',
+        'salary',
+        'registration_number',
     ];
 
     protected $appends = [
         'hashid',
+    ];
+
+    protected $casts = [
+        'birth_date' => 'date',
+        'admission_date' => 'date',
     ];
 
     public function project(){

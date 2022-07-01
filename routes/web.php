@@ -1,13 +1,15 @@
 <?php
 
 use App\Http\Controllers\BatteryController;
-use App\Http\Controllers\GenerateGfipController;
+use App\Http\Controllers\GfipController;
 use App\Http\Controllers\InssController;
 use App\Http\Controllers\IrpfController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\PersonController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\TestController;
 use App\Http\Controllers\UserController;
 use App\Http\Resources\BankResource;
 use App\Http\Resources\UserResource;
@@ -91,9 +93,9 @@ Route::middleware(['authorizeActiveUser'])->prefix('api')->group(function(){
     Route::post('/irpf/{irpf}', [IrpfController::class, 'update']);
 
     // GFIP
-    Route::get('/gfip', [GenerateGfipController::class, 'index']);
-    Route::get('/gfip/download', [GenerateGfipController::class, 'download']);
-    Route::post('/gfip/start', [GenerateGfipController::class, 'start']);
+    Route::get('/gfip', [GfipController::class, 'index']);
+    Route::get('/gfip/download', [GfipController::class, 'download']);
+    Route::post('/gfip/start', [GfipController::class, 'start']);
 
     /**
      * API routes exclusive for admins

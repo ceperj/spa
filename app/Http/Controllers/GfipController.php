@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\GenerateGfipFile;
 use App\Services\GfipInfo;
 
-class GenerateGfipController extends Controller
+class GfipController extends Controller
 {
     public function index(GfipInfo $gfip)
     {
@@ -17,6 +17,7 @@ class GenerateGfipController extends Controller
         if (! $gfip->canStart())
             return response('', 400);
 
+        $gfip->resetLockData();
         GenerateGfipFile::dispatch();
         return response('', 200);
     }
@@ -24,7 +25,7 @@ class GenerateGfipController extends Controller
     public function download(GfipInfo $gfip)
     {
         if (! $gfip->canDownload())
-            return response('O arquivo não foi gerado ou link expirou.', 404);
+            return response('O arquivo não foi gerado ou o link expirou.', 404);
 
         return $gfip->downloadOutput();
     }

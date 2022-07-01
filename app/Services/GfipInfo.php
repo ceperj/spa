@@ -7,77 +7,55 @@ use Illuminate\Support\Facades\Storage;
 
 class GfipInfo
 {
-    private const DATE_FORMAT = 'Y-m-d H:i:s';
+    public const DATE_FORMAT = 'Y-m-d H:i:s';
+    public const STATE_NOT_STARTED = 'NOTSTARTED';
+    public const STATE_QUEUED = 'QUEUED';
+    public const STATE_STARTED = 'STARTED';
+    public const STATE_RUNNING = 'RUNNING';
+    public const STATE_COMPLETED = 'COMPLETED';
 
-    static private $outputFile = 'gfip.txt';
-    static private $lockFile = 'gfip.lock';
-    static private $lockSeparator = " ||| ";
-    static private $emptyInfo = [
-        'started'=>false,
-        'completed'=>false,
-        'success'=>false,
-        'startedAt'=>'',
-        'startedAtRead'=>'',
-        'updatedAt'=>'',
-        'updatedAtRead'=>'',
-        'completedAt'=>'',
-        'completedAtRead'=>'',
-        'current'=>0,
-        'total'=>0,
-        'error'=>'',
-        'running'=>false,
-        'progress'=>0,
-        'expiresAt' => false,
-    ];
+    static private $outputFile = 'gfip-result.txt';
+    static private $lockFile = 'gfip-lock.json';
+    static private $inputFile = 'gfip-input.json';
+    static private $emptyInfo = ['state' => self::STATE_NOT_STARTED];
 
-    /**
-     * Return information regarding to the file generation from the lock file.
-     */
-    public function info(int $expireInDays = 7)
+    public function info($expireInDays = 7)
     {
-        $lock = $this->getLockData();
+        $json = $this->getLockData();
 
-        if (! $lock)
-            return (object)self::$emptyInfo;
+        if ($json->state === self::STATE_COMPLETED)
+        {
+            $availability = $this->getResultAvailability($json->completedAt, $expireInDays);
+            if ($availability)
+                $json->expiresAt = $availability;
+            else
+                $json = self::$emptyInfo;
+        }
 
-        $availableTo = $this->getResultAvailability($lock->completedAt, $expireInDays);
-        
-        if ($lock->completed && ! $availableTo)
-            return (object)self::$emptyInfo;
-
-        $lock->expiresAt = $availableTo;
-
-        return $lock;
+        return $json;
     }
 
-    /**
-     * Is the application in a state where it can start a generation?
-     */
-    public function canStart()
-    {
-        $lock = $this->getLockData();
-
-        if (! $lock)
+    public function canStart(){
+        if (! Storage::exists(self::$lockFile))
             return true;
-
-        return ! $lock->running;
+        
+        $json = $this->getLockData();
+        return ($json->state === self::STATE_COMPLETED)
+            || ($json->state === self::STATE_NOT_STARTED);
     }
 
-    /**
-     * Can user access and download the generated file?
-     * 
-     * - The file exists;
-     * - The generation is completed and succeeded;
-     * - The generated file did not expire;
-     */
-    public function canDownload(int $expireInDays = 7)
-    {
-        $lock = $this->getLockData();
-
-        if (! $lock->completed)
+    public function canDownload($expireInDays = 7){
+        if (! Storage::exists(self::$lockFile))
             return false;
-
-        return !! $this->getResultAvailability($lock->completedAt, $expireInDays);
+        
+        if (! Storage::exists(self::$outputFile))
+            return false;
+        
+        $json = $this->getLockData();
+        if ($json->state !== self::STATE_COMPLETED)
+            return false;
+        
+        return $this->getResultAvailability($json->completedAt, $expireInDays);
     }
 
     /**
@@ -104,49 +82,44 @@ class GfipInfo
         return Storage::download(self::$outputFile);
     }
 
-    /**
-     * Replace the lock file by this data.
-     */
-    public function setLockData(object $info)
+    public function setLockData(object $object)
     {
-        $contents = implode(self::$lockSeparator, [
-            $info->started,
-            $info->completed,
-            $info->success,
-            $info->startedAt,
-            date(self::DATE_FORMAT),
-            $info->completedAt,
-            $info->current,
-            $info->total,
-            $info->error,
-        ]);
-        return Storage::put(self::$lockFile, $contents);
+        $object->updatedAt = date(self::DATE_FORMAT);
+        $content = json_encode($object, JSON_PRETTY_PRINT);
+        return Storage::put(self::$lockFile, $content);
     }
 
-    private function getLockData()
+    public function resetLockData()
     {
-        if (! Storage::exists(self::$lockFile))
-            return null;
+        $this->setLockData((object)[
+            'state' => self::STATE_QUEUED,
+            'startedAt' => date(self::DATE_FORMAT),
+        ]);
+    }
 
-        $contents = Storage::get(self::$lockFile);
-        $info = explode(self::$lockSeparator, $contents, 9);
-        $result = (object)[
-            'started' => !! $info[0],
-            'completed' => !! $info[1],
-            'success' => !! $info[2],
-            'startedAt' => $info[3],
-            'updatedAt' => $info[4],
-            'completedAt' => $info[5],
-            'current' => (int)$info[6],
-            'total' => (int)$info[7],
-            'error' => $info[8],
-        ];
-        $result->running = $result->started && ! $result->completed;
-        $result->progress = ! $result->total ? null : (int)((float)$result->current / (float)$result->total * 100);
-        $result->startedAtRead = ! $result->startedAt ? '' : Carbon::createFromFormat(self::DATE_FORMAT, $result->startedAt)->diffForHumans();
-        $result->completedAtRead = ! $result->completedAt ? '' : Carbon::createFromFormat(self::DATE_FORMAT, $result->completedAt)->diffForHumans();
-        $result->updatedAtRead = ! $result->updatedAt ? '' : Carbon::createFromFormat(self::DATE_FORMAT, $result->updatedAt)->diffForHumans();
-        return $result;
+    public function getLockData()
+    {
+        $content = Storage::get(self::$lockFile);
+        
+        if (! $content)
+            return (object)self::$emptyInfo;
+
+        $json = json_decode($content);
+        if (! $json || !isset($json->state))
+            return (object)self::$emptyInfo;
+
+        if ($json->state === self::STATE_RUNNING)
+            $json->progress = (int)((double)$json->current / (double)$json->total * 100);
+        $json->startedAtRead = !isset($json->startedAt) ? '' : Carbon::createFromFormat(self::DATE_FORMAT, $json->startedAt)->diffForHumans();
+        $json->completedAtRead = !isset($json->completedAt) ? '' : Carbon::createFromFormat(self::DATE_FORMAT, $json->completedAt)->diffForHumans();
+        $json->updatedAtRead = !isset($json->updatedAt) ? '' : Carbon::createFromFormat(self::DATE_FORMAT, $json->updatedAt)->diffForHumans();
+        
+        return $json;
+    }
+
+    public function getInputData()
+    {
+        return json_decode(Storage::get(self::$inputFile));
     }
 
     /**

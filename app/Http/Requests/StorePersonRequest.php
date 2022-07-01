@@ -32,6 +32,9 @@ class StorePersonRequest extends StandardFormRequest
             'bank_agency' => 'required|string',
             'bank_account' => 'required',
             'battery_id' => ['required', $this->existsAndActive(Battery::class)],
+            'salary' => 'required|string|regex:/^\d+$/',
+            'admission_date' => 'required|date:Y-m-d',
+            'registration_number' => 'required|integer',
             'email' => 'required|email',
             'job_id' => ['required', $this->existsAndActive(Job::class)],
         ];

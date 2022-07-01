@@ -3,6 +3,10 @@
 namespace App\Jobs;
 
 use App\Models\Person;
+use App\Services\Gfip\Generator\GfipGenerator;
+use App\Services\Gfip\Generator\GfipWriter;
+use App\Services\Gfip\Types\Business;
+use App\Services\Gfip\Types\Responsible;
 use App\Services\GfipInfo;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -12,6 +16,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 /**
  * Job that generates a GFIP report file using the available data. Only one
@@ -30,10 +36,18 @@ class GenerateGfipFile implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    private $info;
+    private object $currentInfoObject;
     private GfipInfo $service;
+    
+    private string $business_file = 'empresa_gfip.json';
+    private string $responsible_file = 'responsavel_gfip.json';
 
-    private const DATE_FORMAT = 'Y-m-d H:i:s';
+    private object $input;
+    private GfipGenerator $generator;
+    private GfipWriter $writer;
+    private Business $business;
+    private Responsible $responsible;
+
     /**
      * Create a new job instance.
      *
@@ -41,16 +55,27 @@ class GenerateGfipFile implements ShouldQueue, ShouldBeUnique
      */
     public function __construct()
     {
-        $this->info = (object)[
-            'started' => false,
-            'completed' => false,
-            'success' => false,
-            'startedAt' => '',
-            'completedAt' => '',
-            'current' => 0,
-            'total' => 0,
-            'error' => '',
+        $this->currentInfoObject = (object)[
+            'state' => GfipInfo::STATE_QUEUED,
+            'startedAt' => date(GfipInfo::DATE_FORMAT),
         ];
+    }
+
+    /**
+     * Handle a job failure.
+     * 
+     * @param  \Throwable  $exception
+     * @return void
+     */
+    public function failed(Throwable $exception)
+    {
+        $gfip = new GfipInfo();
+        $data = $gfip->getLockData();
+        $data->state = GfipInfo::STATE_COMPLETED;
+        $data->completedAt = date(GfipInfo::DATE_FORMAT);
+        $data->success = false;
+        $data->message = $exception->getMessage();
+        $gfip->setLockData($data);
     }
 
     /**
@@ -61,29 +86,43 @@ class GenerateGfipFile implements ShouldQueue, ShouldBeUnique
     public function handle(GfipInfo $gfip)
     {
         $this->service = $gfip;
-        $this->started = true;
-        $this->startedAt = date(self::DATE_FORMAT);
+        
         $this->updateLockFile([
-            'started'=>true,
-            'startedAt'=>date(self::DATE_FORMAT)
+            'state'=>GfipInfo::STATE_STARTED,
+            'startedAt'=>date(GfipInfo::DATE_FORMAT)
         ]);
 
+        $this->writer = new GfipWriter(function ($text) use ($gfip) {
+            $gfip->appendOutput($text);
+        });
+
         try {
+            $this->generator = new GfipGenerator();
+            $this->input = $this->service->getInputData();
+            $this->business = $this->generator->getBusiness(Storage::get($this->business_file));
+            $this->responsible = $this->generator->getResponsible(Storage::get($this->responsible_file));
+            $type00 = $this->generator->getRowType00($this->business, $this->responsible, $this->input->year, $this->input->month, $this->input->codigo_recolhimento);
+            $type10 = $this->generator->getRowType10($this->business, $this->input->codigo_centralizacao, $this->input->fpas);
+            $type90 = $this->generator->getRowType90();
+
             $gfip->eraseData();
+            $this->writer->beginFile($type00);
+            $this->writer->appendSection($type10);
             $this->handleDatabase();
+            $this->writer->endFile($type90);
+
             $this->updateLockFile([
-                'started' => false,
-                'completed' => true,
+                'state' => GfipInfo::STATE_COMPLETED,
+                'completedAt' => date(GfipInfo::DATE_FORMAT),
                 'success' => true,
-                'completedAt' => date(self::DATE_FORMAT)
+                'message' => '',
             ]);
         } catch (Exception $e) {
             $this->updateLockFile([
-                'started' => false,
-                'completed' => true,
+                'state' => GfipInfo::STATE_COMPLETED,
+                'completedAt' => date(GfipInfo::DATE_FORMAT),
                 'success' => false,
-                'completedAt' => date(self::DATE_FORMAT),
-                'error' => $e->getMessage(),
+                'message' => $e->getMessage(),
             ]);
             throw $e;
         }
@@ -100,11 +139,14 @@ class GenerateGfipFile implements ShouldQueue, ShouldBeUnique
             ->get()
             ->map(fn ($row) => $row->id);
 
-        $chunksOfIds = $ids->chunk(10);
-        $this->updateLockFile(['total'=>$ids->count()]);
+        $this->updateLockFile([
+            'state' => GfipInfo::STATE_RUNNING,
+            'current'=>0,
+            'total'=>$ids->count()
+        ]);
 
         $current = 0;
-        foreach($chunksOfIds as $chunk)
+        foreach($ids->chunk(10) as $chunk)
         {
             $persons = Person::withoutTrashed()->whereIn('id', $chunk)->get();
             $this->handlePersons($persons);
@@ -121,17 +163,18 @@ class GenerateGfipFile implements ShouldQueue, ShouldBeUnique
             $this->handlePerson($person);
         }
     }
-
+    
     private function handlePerson($person)
     {
-        $this->service->appendOutput("Processing line $person->id [project $person->project_id, battery $person->battery_id], status $person->status, created at $person->created_at, deleted at $person->deleted_at");
+        $type30 = $this->generator->getRowType30($this->business, $person);
+        $this->writer->appendRecord($type30);
     }
-
+    
     private function updateLockFile(array $fields = [])
     {
         foreach($fields as $key=>$value)
-            $this->info->{$key} = $value;
+            $this->currentInfoObject->{$key} = $value;
 
-        $this->service->setLockData($this->info);
+        $this->service->setLockData($this->currentInfoObject);
     }
 }
