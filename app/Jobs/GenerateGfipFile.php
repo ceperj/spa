@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Models\Person;
+use App\Services\Calculators\BcNumber;
+use App\Services\Calculators\InssTable;
 use App\Services\Gfip\Generator\GfipGenerator;
 use App\Services\Gfip\Generator\GfipWriter;
 use App\Services\Gfip\Types\Business;
@@ -15,6 +17,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
@@ -104,11 +107,12 @@ class GenerateGfipFile implements ShouldQueue, ShouldBeUnique
             $type00 = $this->generator->getRowType00($this->business, $this->responsible, $this->input->year, $this->input->month, $this->input->codigo_recolhimento);
             $type10 = $this->generator->getRowType10($this->business, $this->input->codigo_centralizacao, $this->input->fpas);
             $type90 = $this->generator->getRowType90();
+            $inss = $this->getInssTable();
 
             $gfip->eraseData();
             $this->writer->beginFile($type00);
             $this->writer->appendSection($type10);
-            $this->handleDatabase();
+            $this->handleDatabase($inss);
             $this->writer->endFile($type90);
 
             $this->updateLockFile([
@@ -128,14 +132,22 @@ class GenerateGfipFile implements ShouldQueue, ShouldBeUnique
         }
     }
 
-    private function handleDatabase()
+    private function getInssTable() : InssTable
+    {
+        $contents = Storage::get('inss.json');
+        $json = json_decode($contents);
+        $aliquot = BcNumber::of($json->aliquot, 0)->divideBy10E(4);
+        $ceil = BcNumber::of($json->ceil, 0)->divideBy10E(2);
+        return new InssTable($aliquot, $ceil);
+    }
+
+    private function handleDatabase(InssTable $inss)
     {
         $ids = DB::table('persons')
             ->select(['id'])
             ->where('status', 1)
             ->orderBy('id')
-            ->orderBy('battery_id')
-            ->orderBy('project_id')
+            ->orderBy('pis')
             ->get()
             ->map(fn ($row) => $row->id);
 
@@ -149,24 +161,24 @@ class GenerateGfipFile implements ShouldQueue, ShouldBeUnique
         foreach($ids->chunk(10) as $chunk)
         {
             $persons = Person::withoutTrashed()->whereIn('id', $chunk)->get();
-            $this->handlePersons($persons);
+            $this->handlePersons($persons, $inss);
             $current += $chunk->count();
             $this->updateLockFile(['current' => $current]);
         }
         return;
     }
 
-    private function handlePersons($persons)
+    private function handlePersons(Collection $persons, InssTable $inss)
     {
         foreach($persons as $person)
         {
-            $this->handlePerson($person);
+            $this->handlePerson($person, $inss);
         }
     }
     
-    private function handlePerson($person)
+    private function handlePerson($person, InssTable $inss)
     {
-        $type30 = $this->generator->getRowType30($this->business, $person);
+        $type30 = $this->generator->getRowType30($this->business, $person, $inss);
         $this->writer->appendRecord($type30);
     }
     

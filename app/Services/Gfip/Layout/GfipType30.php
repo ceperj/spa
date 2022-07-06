@@ -22,7 +22,7 @@ class GfipType30 implements ILayoutRow
     public $remuneracao_sem_13o;
     public $remuneracao_13o;
     public $classe_contribuicao = null;
-    public $ocorrencia = null;
+    public $ocorrencia = '05';
     public $valor_descontado_segurado;
     public $base_calculo_prevsocial;
     public $base_calculo_13o_prevsocial_movimento;

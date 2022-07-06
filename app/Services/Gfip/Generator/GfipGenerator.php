@@ -3,6 +3,8 @@
 namespace App\Services\Gfip\Generator;
 
 use App\Models\Person;
+use App\Services\Calculators\BcNumber;
+use App\Services\Calculators\InssTable;
 use App\Services\Gfip\Layout\GfipType00;
 use App\Services\Gfip\Layout\GfipType10;
 use App\Services\Gfip\Layout\GfipType30;
@@ -48,17 +50,22 @@ class GfipGenerator
     }
 
     public function getRowType30(Business $business,
-                                 Person $model) : GfipType30
+                                 Person $model,
+                                 InssTable $inssTable) : GfipType30
     {
+        $salary = BcNumber::of($model->salary, 0)->divideBy10E(2);
+        if ($salary->equalsTo(0))
+            throw new Exception("O salário de '$model->name' não foi preenchido. Como o arquivo seria gerado com erro, a geração foi interrompida.");
+
         $row = new GfipType30();
         $row->empresa = $business;
         $row->trabalhador = EmployeeType13::fromModel($model);
-        $row->remuneracao_sem_13o = 'CALCULAR';
-        $row->remuneracao_13o = 'CALCULAR';
-        $row->valor_descontado_segurado = 'CALCULAR';
-        $row->base_calculo_prevsocial = 'CALCULAR';
-        $row->base_calculo_13o_prevsocial_movimento = 'CALCULAR';
-        $row->base_calculo_13o_prevsocial_gps = 'CALCULAR';
+        $row->remuneracao_sem_13o = (string)$model->salary;
+        $row->remuneracao_13o = '0';
+        $row->valor_descontado_segurado = $inssTable->getInssFor($salary)->toIntegerString(2);
+        $row->base_calculo_prevsocial = '0';
+        $row->base_calculo_13o_prevsocial_movimento = '0';
+        $row->base_calculo_13o_prevsocial_gps = '0';
         return $row;
     }
 
