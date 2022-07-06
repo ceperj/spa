@@ -1,6 +1,6 @@
 <template>
     <header>
-        <div class="d-flex justify-content-between">
+        <div class="d-flex justify-content-around">
             <img src="@/assets/logo.png" class="my-2" height="60" />
             <slot name="login"></slot>
         </div>
